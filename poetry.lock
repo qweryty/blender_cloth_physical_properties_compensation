@@ -1,0 +1,18 @@
+[[package]]
+name = "fake-bpy-module-3.2"
+version = "20220615"
+description = "Collection of the fake Blender Python API module for the code completion."
+category = "dev"
+optional = false
+python-versions = ">=3.7"
+
+[metadata]
+lock-version = "1.1"
+python-versions = "^3.10"
+content-hash = "0288959bebdc9c05a651eb768121c81738a331a7a560613e0aeb1b89d025e0e3"
+
+[metadata.files]
+"fake-bpy-module-3.2" = [
+    {file = "fake-bpy-module-3.2-20220615.tar.gz", hash = "sha256:8392120caad6f655034465cd9397f88cee70a54e41466e661f22da16b5a5afc1"},
+    {file = "fake_bpy_module_3.2-20220615-py3-none-any.whl", hash = "sha256:654ccb28bd8ac5c3d249eab428f0b83b407c6e754f6402a81fe5740c547b98b3"},
+]

@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "correct-cloth-mass"
+version = "0.1.0"
+description = ""
+authors = ["Sergey Morozov <sergey@morozov.top>"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+
+[tool.poetry.dev-dependencies]
+"fake-bpy-module-3.2" = "^20220615"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
