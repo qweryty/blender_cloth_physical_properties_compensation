@@ -4,7 +4,7 @@ import bmesh
 import bpy
 
 bl_info = {
-    'name': 'Correct Cloth Mass',
+    'name': 'Correct Cloth Physics',
     'blender': (3, 2, 0),
     'category': 'Physics'
 }
@@ -41,7 +41,7 @@ class ClothMassProperties(bpy.types.PropertyGroup):
         name='Use Modifiers',
         default=True,
         description='Choose whether to use mass or density.',
-        update=ClothMassProperties._update_use_modifiers
+        update=ClothMassProperties._update
     )
 
     private_mass: bpy.props.FloatProperty(min=0)
@@ -65,15 +65,26 @@ class ClothMassProperties(bpy.types.PropertyGroup):
         min=0
     )
 
-    def _set_sim(self, obj):
-        if self.use_modifiers:
-            get_cloth_modifier(obj).settings.mass = self.private_mass / get_real_object_vertices_count(obj)
-        else:
-            get_cloth_modifier(obj).settings.mass = self.private_mass / len(obj.data.vertices)
+    air_viscosity: bpy.props.FloatProperty(
+        name='Air Viscosity',
+        description='Air Viscosity',
+        min=0,
+        default=1,
+        update=ClothMassProperties._update
+    )
 
-    def _update_use_modifiers(self, context):
+    def _set_sim(self, obj):
+        cloth_modifier_settings = get_cloth_modifier(obj).settings
+        if self.use_modifiers:
+            cloth_modifier_settings.mass = self.private_mass / get_real_object_vertices_count(obj)
+        else:
+            cloth_modifier_settings.mass = self.private_mass / len(obj.data.vertices)
+
+        cloth_modifier_settings.air_damping = self.air_viscosity * cloth_modifier_settings.mass
+
+    def _update(self, context):
         obj = self.id_data
-        self.private_density = self.private_mass / calculate_area(obj, use_modifiers=self.use_modifiers)
+        self.private_mass = self.private_density * calculate_area(obj, use_modifiers=self.use_modifiers)
         self._set_sim(obj)
 
     def _set_mass(self, value):
@@ -118,6 +129,8 @@ class ClothMassPanel(bpy.types.Panel):
         row.prop(obj.correct_cloth_mass, 'mass')
         row = layout.row()
         row.prop(obj.correct_cloth_mass, 'density')
+        row = layout.row()
+        row.prop(obj.correct_cloth_mass, 'air_viscosity')
 
 
 def register():
