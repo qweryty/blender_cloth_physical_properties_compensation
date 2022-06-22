@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import bmesh
 import bpy
+from bpy.app.handlers import persistent
 
 bl_info = {
     'name': 'Correct Cloth Physics',
@@ -44,7 +45,7 @@ class ClothMassProperties(bpy.types.PropertyGroup):
         update=ClothMassProperties._update
     )
 
-    private_mass: bpy.props.FloatProperty(min=0)
+    private_mass: bpy.props.FloatProperty(min=0, default=-1.0)
 
     mass: bpy.props.FloatProperty(
         name='Mass',
@@ -55,14 +56,14 @@ class ClothMassProperties(bpy.types.PropertyGroup):
         min=0
     )
 
-    private_density: bpy.props.FloatProperty(min=0)
+    private_density: bpy.props.FloatProperty(min=0, default=10)
 
     density: bpy.props.FloatProperty(
         name='Density',
         description='Density of mesh in kg/m2.',
         set=ClothMassProperties._set_density,
         get=ClothMassProperties._get_density,
-        min=0
+        min=0,
     )
 
     air_viscosity: bpy.props.FloatProperty(
@@ -73,8 +74,13 @@ class ClothMassProperties(bpy.types.PropertyGroup):
         update=ClothMassProperties._update
     )
 
-    def _set_sim(self, obj):
-        cloth_modifier_settings = get_cloth_modifier(obj).settings
+    def set_sim(self):
+        obj = self.id_data
+        cloth_modifier = get_cloth_modifier(obj)
+        if not cloth_modifier:
+            return
+
+        cloth_modifier_settings = cloth_modifier.settings
         if self.use_modifiers:
             cloth_modifier_settings.mass = self.private_mass / get_real_object_vertices_count(obj)
         else:
@@ -85,15 +91,18 @@ class ClothMassProperties(bpy.types.PropertyGroup):
     def _update(self, context):
         obj = self.id_data
         self.private_mass = self.private_density * calculate_area(obj, use_modifiers=self.use_modifiers)
-        self._set_sim(obj)
+        self.set_sim()
 
     def _set_mass(self, value):
         self.private_mass = value
         obj = self.id_data
         self.private_density = value / calculate_area(obj, use_modifiers=self.use_modifiers)
-        self._set_sim(obj)
+        self.set_sim()
 
     def _get_mass(self):
+        if self.private_mass < 0:
+            obj = self.id_data
+            self.private_mass = self.private_density * calculate_area(obj, use_modifiers=self.use_modifiers)
         return self.private_mass
 
     def _set_density(self, value):
@@ -101,7 +110,7 @@ class ClothMassProperties(bpy.types.PropertyGroup):
         obj = self.id_data
         area = calculate_area(obj, use_modifiers=self.use_modifiers)
         self.private_mass = area * value
-        self._set_sim(obj)
+        self.set_sim()
 
     def _get_density(self):
         return self.private_density
@@ -133,16 +142,32 @@ class ClothMassPanel(bpy.types.Panel):
         row.prop(obj.correct_cloth_mass, 'air_viscosity')
 
 
+depsgraph_post_running = False
+
+
+@persistent
+def depsgraph_post_handler(post):
+    global depsgraph_post_running
+    active_object = bpy.context.active_object
+    if depsgraph_post_running or not active_object or not active_object.correct_cloth_mass:
+        return
+
+    depsgraph_post_running = True
+    active_object.correct_cloth_mass.set_sim()
+    depsgraph_post_running = False
+
+
 def register():
     bpy.utils.register_class(ClothMassProperties)
     bpy.utils.register_class(ClothMassPanel)
-    bpy.types.ClothSettings.correct_cloth_mass = bpy.props.PointerProperty(type=ClothMassProperties)
     bpy.types.Object.correct_cloth_mass = bpy.props.PointerProperty(type=ClothMassProperties)
+    bpy.app.handlers.depsgraph_update_post.append(depsgraph_post_handler)
 
 
 def unregister():
     bpy.utils.unregister_class(ClothMassPanel)
     bpy.utils.unregister_class(ClothMassProperties)
+    bpy.app.handlers.depsgraph_update_post.remove(depsgraph_post_handler)
 
 
 if __name__ == '__main__':
