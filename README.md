@@ -10,9 +10,8 @@ vertex count and area.
 ![Settings](./docs/img/settings.png)
 
 ## Examples
-| | |
-|---|---|
 | ![Original](./docs/img/side_base.gif ) | ![Subdivided](./docs/img/side_subdivided.gif) |
+|---|---|
 | Original | Subdivided |
 | ![Fixed](./docs/img/side_corrected.gif) | ![Pretty](./docs/img/side_pretty.gif) |
 | Subdivided using addon | Subdivided using addon + Subdivided after baking |
