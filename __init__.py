@@ -5,9 +5,16 @@ import bpy
 from bpy.app.handlers import persistent
 
 bl_info = {
-    'name': 'Correct Cloth Physics',
+    'name': 'Cloth Physical Properties Compensation',
+    'description': 'Adds replacement settings for physical properties that will compensate for '
+                   'changes in vertex count and area',
+    'category': 'Physics',
+    'version': (0, 1),
+    'author': 'Sergey Morozov',
     'blender': (3, 2, 0),
-    'category': 'Physics'
+    'location': 'Properties > Physics Properties',
+    'tracker_url':
+        'https://github.com/qweryty/blender_cloth_physical_properties_compensation/issues',
 }
 
 
@@ -45,6 +52,13 @@ class ClothMassProperties(bpy.types.PropertyGroup):
         update=ClothMassProperties._update
     )
 
+    enabled: bpy.props.BoolProperty(
+        name='Enabled',
+        description='Enable mass compensation.',
+        default=True,
+        update = ClothMassProperties._update
+    )
+
     private_mass: bpy.props.FloatProperty(min=0, default=-1.0)
 
     mass: bpy.props.FloatProperty(
@@ -75,6 +89,9 @@ class ClothMassProperties(bpy.types.PropertyGroup):
     )
 
     def set_sim(self):
+        if not self.enabled:
+            return
+
         obj = self.id_data
         cloth_modifier = get_cloth_modifier(obj)
         if not cloth_modifier:
@@ -116,9 +133,9 @@ class ClothMassProperties(bpy.types.PropertyGroup):
         return self.private_density
 
 
-class ClothMassPanel(bpy.types.Panel):
-    bl_label = 'Cloth Mass'
-    bl_idname = 'PHYSICS_PT_cloth_mass'
+class PhysicalPropertiesCompensationPanel(bpy.types.Panel):
+    bl_label = 'Physical Properties Compensation'
+    bl_idname = 'PHYSICS_PT_physical_properties_compensation'
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = 'physics'
@@ -131,6 +148,12 @@ class ClothMassPanel(bpy.types.Panel):
         layout = self.layout
 
         obj = context.object
+
+        row = layout.row()
+        row.prop(obj.correct_cloth_mass, 'enabled')
+
+        if not obj.correct_cloth_mass.enabled:
+            return
 
         row = layout.row()
         row.prop(obj.correct_cloth_mass, 'use_modifiers')
@@ -159,13 +182,13 @@ def depsgraph_post_handler(post):
 
 def register():
     bpy.utils.register_class(ClothMassProperties)
-    bpy.utils.register_class(ClothMassPanel)
+    bpy.utils.register_class(PhysicalPropertiesCompensationPanel)
     bpy.types.Object.correct_cloth_mass = bpy.props.PointerProperty(type=ClothMassProperties)
     bpy.app.handlers.depsgraph_update_post.append(depsgraph_post_handler)
 
 
 def unregister():
-    bpy.utils.unregister_class(ClothMassPanel)
+    bpy.utils.unregister_class(PhysicalPropertiesCompensationPanel)
     bpy.utils.unregister_class(ClothMassProperties)
     bpy.app.handlers.depsgraph_update_post.remove(depsgraph_post_handler)
 
