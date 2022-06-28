@@ -1,0 +1,21 @@
+name: Release
+
+on:
+  # Triggers the workflow on push or pull request events but only for the "master" branch
+  push:
+    tags:
+      - "v*"
+
+  workflow_dispatch:
+
+jobs:
+  release:
+    name: "Release"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          prerelease: false
+          files: |
+            *.py
