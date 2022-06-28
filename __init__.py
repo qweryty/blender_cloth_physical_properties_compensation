@@ -9,7 +9,7 @@ bl_info = {
     'description': 'Adds replacement settings for physical properties that will compensate for '
                    'changes in vertex count and area',
     'category': 'Physics',
-    'version': (0, 1),
+    'version': (0, 1, 0),
     'author': 'Sergey Morozov',
     'blender': (3, 2, 0),
     'location': 'Properties > Physics Properties',
